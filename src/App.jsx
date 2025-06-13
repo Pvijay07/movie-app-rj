@@ -21,6 +21,9 @@ function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [debounce, setDeBounce] = useState("");
+  const [popularMovies, setPopularMovies] = useState([]);
+  const [upcomingMovies, setUpcomingMovies] = useState([]);
+  const [recommandationMovies, setRecommandationMovies] = useState([]);
   useDebounce(() => setDeBounce(searchTerm), 500, [searchTerm]);
 
   const fecthMovies = async (query = "") => {
@@ -42,9 +45,88 @@ function App() {
     }
     setLoading(false);
   };
+
+  const fetchPopularMovies = async () => {
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = `${API_URL}/movie/popular`;
+      const res = await fetch(response, API_OPTIONS);
+      if (!res.ok) {
+        throw new Error(res.statusText);
+      }
+      const data = await res.json();
+      setPopularMovies(data.results);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Error fetching popular movies");
+    }
+  };
+
+  const fetchUpcomingMovies = async () => {
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = `${API_URL}/movie/upcoming`;
+      const res = await fetch(response, API_OPTIONS);
+      if (!res.ok) {
+        throw new Error(res.statusText);
+      }
+      const data = await res.json();
+      setUpcomingMovies(data.results);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Error fetching popular movies");
+    }
+  };
+
+ const fetchRecommandationMovies = async () => {
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = `${API_URL}/movie/1284120/recommendations`;
+      const res = await fetch(response, API_OPTIONS);
+      if (!res.ok) {
+        throw new Error(res.statusText);
+      }
+      const data = await res.json();
+      setRecommandationMovies(data.results);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Error fetching popular movies");
+    }
+  };
+ useEffect(() => {
+    const run = async () => {
+      await fetchRecommandationMovies();
+    };
+    run();
+  }, []);
+
   useEffect(() => {
-    fecthMovies(debounce);
+    const run = async () => {
+      await fetchPopularMovies();
+    };
+    run();
+  }, []);
+
+  useEffect(() => {
+    const run = async () => {
+      await fetchUpcomingMovies();
+    };
+    run();
+  }, []);
+
+  useEffect(() => {
+    const run = async () => {
+      await fecthMovies(debounce);
+    };
+    run();
   }, [debounce]);
+
   return (
     <main>
       <div className="pattern">
@@ -57,6 +139,64 @@ function App() {
             </h1>
             <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           </header>
+
+          <section className="popular-movies">
+            <h2 className="mt-[20px] text-xl font-semibold text-white">
+              Popular Movies
+            </h2>
+            {loading ? (
+              <p className="text-white">Loading Movies...</p>
+            ) : errorMessage ? (
+              <p className="text-red-500">Error loading popular movies</p>
+            ) : (
+              <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
+                {popularMovies.map((movie) => (
+                  <li key={movie.id} className="flex-shrink-0 w-[150px]">
+                    <MovieCard movie={movie} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="upcoming-movies">
+            <h2 className="mt-[20px] text-xl font-semibold text-white">
+              Upcoming Movies
+            </h2>
+            {loading ? (
+              <p className="text-white">Loading Movies...</p>
+            ) : errorMessage ? (
+              <p className="text-red-500">Error loading upcoming movies</p>
+            ) : (
+              <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
+                {upcomingMovies.map((movie) => (
+                  <li key={movie.id} className="flex-shrink-0 w-[150px]">
+                    <MovieCard movie={movie} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="upcoming-movies">
+            <h2 className="mt-[20px] text-xl font-semibold text-white">
+              Recommandation Movies
+            </h2>
+            {loading ? (
+              <p className="text-white">Loading Movies...</p>
+            ) : errorMessage ? (
+              <p className="text-red-500">Error loading recommandation movies</p>
+            ) : (
+              <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
+                {recommandationMovies.map((movie) => (
+                  <li key={movie.id} className="flex-shrink-0 w-[150px]">
+                    <MovieCard movie={movie} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section className="all-movies">
             <h2 className="mt-[20px]">All Movies</h2>
             {loading ? (
