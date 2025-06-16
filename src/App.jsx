@@ -6,6 +6,9 @@ import MoviePage from "./components/MoviePage";
 import { useDebounce } from "react-use";
 import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
 import MovieWatch from "./components/MovieWatch";
+import Navbar from "./components/Navbar";
+import PersonMovies from "./components/PersonMovies";
+import TvShow from "./components/TvShow";
 
 const API_URL = "https://api.themoviedb.org/3";
 const API_KEY =
@@ -117,6 +120,8 @@ function App() {
 
   return (
     <Router>
+      <Navbar />
+
       <Routes>
         <Route
           path="/"
@@ -151,7 +156,7 @@ function App() {
                         {popularMovies.map((movie) => (
                           <Link
                             key={movie.id}
-                            to={`/moviepage/${movie.id}`}
+                            to={`/movie/${movie.id}`}
                             className="block"
                           >
                             <li
@@ -181,7 +186,7 @@ function App() {
                         {upcomingMovies.map((movie) => (
                           <Link
                             key={movie.id}
-                            to={`/moviepage/${movie.id}`}
+                            to={`/movie/${movie.id}`}
                             className="block"
                           >
                             <li
@@ -211,7 +216,7 @@ function App() {
                         {recommendationMovies.map((movie) => (
                           <Link
                             key={movie.id}
-                            to={`/moviepage/${movie.id}`}
+                            to={`/movie/${movie.id}`}
                             className="block"
                           >
                             <li className="flex-shrink-0 w-[150px]">
@@ -234,7 +239,7 @@ function App() {
                         {movies.map((movie) => (
                           <Link
                             key={movie.id}
-                            to={`/moviepage/${movie.id}`}
+                            to={`/movie/${movie.id}`}
                             className="block"
                           >
                             <MovieCard movie={movie} />
@@ -248,8 +253,10 @@ function App() {
             </main>
           }
         />
-        <Route path="/moviepage/:id" element={<MoviePage />} />
+        <Route path="/movie/:id" element={<MoviePage />} />
         <Route path="/watch/:id" element={<MovieWatch />} />
+        <Route path="/person-movies/:id" element={<PersonMovies />} />
+        <Route path="/tv-shows" element={<TvShow/>} />
       </Routes>
     </Router>
   );
