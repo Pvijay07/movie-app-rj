@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import Search from "./components/Search";
 import MovieCard from "./components/MovieCard";
+import MoviePage from "./components/MoviePage";
 import { useDebounce } from "react-use";
+import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
+import MovieWatch from "./components/MovieWatch";
 
 const API_URL = "https://api.themoviedb.org/3";
 const API_KEY =
@@ -15,6 +18,7 @@ const API_OPTIONS = {
     accept: "application/json",
   },
 };
+
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [movies, setMovies] = useState([]);
@@ -23,15 +27,16 @@ function App() {
   const [debounce, setDeBounce] = useState("");
   const [popularMovies, setPopularMovies] = useState([]);
   const [upcomingMovies, setUpcomingMovies] = useState([]);
-  const [recommandationMovies, setRecommandationMovies] = useState([]);
+  const [recommendationMovies, setRecommendationMovies] = useState([]);
+
   useDebounce(() => setDeBounce(searchTerm), 500, [searchTerm]);
 
-  const fecthMovies = async (query = "") => {
+  const fetchMovies = async (query = "") => {
     setLoading(true);
     setErrorMessage("");
     try {
       const response = query
-        ? `${API_URL}/discover/movie?query=${encodeURIComponent(query)}`
+        ? `${API_URL}/search/movie?query=${encodeURIComponent(query)}`
         : `${API_URL}/discover/movie?sort_by=popularity.desc`;
       const res = await fetch(response, API_OPTIONS);
       if (!res.ok) {
@@ -49,7 +54,6 @@ function App() {
   const fetchPopularMovies = async () => {
     setLoading(true);
     setErrorMessage("");
-
     try {
       const response = `${API_URL}/movie/popular`;
       const res = await fetch(response, API_OPTIONS);
@@ -62,12 +66,12 @@ function App() {
       console.error(error);
       setErrorMessage("Error fetching popular movies");
     }
+    setLoading(false);
   };
 
   const fetchUpcomingMovies = async () => {
     setLoading(true);
     setErrorMessage("");
-
     try {
       const response = `${API_URL}/movie/upcoming`;
       const res = await fetch(response, API_OPTIONS);
@@ -78,14 +82,14 @@ function App() {
       setUpcomingMovies(data.results);
     } catch (error) {
       console.error(error);
-      setErrorMessage("Error fetching popular movies");
+      setErrorMessage("Error fetching upcoming movies");
     }
+    setLoading(false);
   };
 
- const fetchRecommandationMovies = async () => {
+  const fetchRecommendationMovies = async () => {
     setLoading(true);
     setErrorMessage("");
-
     try {
       const response = `${API_URL}/movie/1284120/recommendations`;
       const res = await fetch(response, API_OPTIONS);
@@ -93,127 +97,161 @@ function App() {
         throw new Error(res.statusText);
       }
       const data = await res.json();
-      setRecommandationMovies(data.results);
+      setRecommendationMovies(data.results);
     } catch (error) {
       console.error(error);
-      setErrorMessage("Error fetching popular movies");
+      setErrorMessage("Error fetching recommendation movies");
     }
+    setLoading(false);
   };
- useEffect(() => {
-    const run = async () => {
-      await fetchRecommandationMovies();
-    };
-    run();
+
+  useEffect(() => {
+    fetchRecommendationMovies();
+    fetchPopularMovies();
+    fetchUpcomingMovies();
   }, []);
 
   useEffect(() => {
-    const run = async () => {
-      await fetchPopularMovies();
-    };
-    run();
-  }, []);
-
-  useEffect(() => {
-    const run = async () => {
-      await fetchUpcomingMovies();
-    };
-    run();
-  }, []);
-
-  useEffect(() => {
-    const run = async () => {
-      await fecthMovies(debounce);
-    };
-    run();
+    fetchMovies(debounce);
   }, [debounce]);
 
   return (
-    <main>
-      <div className="pattern">
-        <div className="wrapper">
-          <header>
-            <img src="./hero.png" alt="Hero Banner" />
-            <h1>
-              Find <span className="text-gradient">Movies</span> You'll Enjoy
-              Without the Hassle
-            </h1>
-            <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          </header>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <main>
+              <div className="pattern">
+                <div className="wrapper">
+                  <header>
+                    <img src="./hero.png" alt="Hero Banner" />
+                    <h1>
+                      Find <span className="text-gradient">Movies</span> You'll
+                      Enjoy Without the Hassle
+                    </h1>
+                    <Search
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                    />
+                  </header>
 
-          <section className="popular-movies">
-            <h2 className="mt-[20px] text-xl font-semibold text-white">
-              Popular Movies
-            </h2>
-            {loading ? (
-              <p className="text-white">Loading Movies...</p>
-            ) : errorMessage ? (
-              <p className="text-red-500">Error loading popular movies</p>
-            ) : (
-              <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
-                {popularMovies.map((movie) => (
-                  <li key={movie.id} className="flex-shrink-0 w-[150px]">
-                    <MovieCard movie={movie} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  <section className="popular-movies">
+                    <h2 className="mt-[20px] text-xl font-semibold text-white">
+                      Popular Movies
+                    </h2>
+                    {loading ? (
+                      <p className="text-white">Loading Movies...</p>
+                    ) : errorMessage ? (
+                      <p className="text-red-500">
+                        Error loading popular movies
+                      </p>
+                    ) : (
+                      <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
+                        {popularMovies.map((movie) => (
+                          <Link
+                            key={movie.id}
+                            to={`/moviepage/${movie.id}`}
+                            className="block"
+                          >
+                            <li
+                              key={movie.id}
+                              className="flex-shrink-0 w-[150px]"
+                            >
+                              <MovieCard movie={movie} />
+                            </li>
+                          </Link>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
 
-          <section className="upcoming-movies">
-            <h2 className="mt-[20px] text-xl font-semibold text-white">
-              Upcoming Movies
-            </h2>
-            {loading ? (
-              <p className="text-white">Loading Movies...</p>
-            ) : errorMessage ? (
-              <p className="text-red-500">Error loading upcoming movies</p>
-            ) : (
-              <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
-                {upcomingMovies.map((movie) => (
-                  <li key={movie.id} className="flex-shrink-0 w-[150px]">
-                    <MovieCard movie={movie} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  <section className="upcoming-movies">
+                    <h2 className="mt-[20px] text-xl font-semibold text-white">
+                      Upcoming Movies
+                    </h2>
+                    {loading ? (
+                      <p className="text-white">Loading Movies...</p>
+                    ) : errorMessage ? (
+                      <p className="text-red-500">
+                        Error loading upcoming movies
+                      </p>
+                    ) : (
+                      <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
+                        {upcomingMovies.map((movie) => (
+                          <Link
+                            key={movie.id}
+                            to={`/moviepage/${movie.id}`}
+                            className="block"
+                          >
+                            <li
+                              key={movie.id}
+                              className="flex-shrink-0 w-[150px]"
+                            >
+                              <MovieCard movie={movie} />
+                            </li>
+                          </Link>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
 
-          <section className="upcoming-movies">
-            <h2 className="mt-[20px] text-xl font-semibold text-white">
-              Recommandation Movies
-            </h2>
-            {loading ? (
-              <p className="text-white">Loading Movies...</p>
-            ) : errorMessage ? (
-              <p className="text-red-500">Error loading recommandation movies</p>
-            ) : (
-              <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
-                {recommandationMovies.map((movie) => (
-                  <li key={movie.id} className="flex-shrink-0 w-[150px]">
-                    <MovieCard movie={movie} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  <section className="upcoming-movies">
+                    <h2 className="mt-[20px] text-xl font-semibold text-white">
+                      Recommendation Movies
+                    </h2>
+                    {loading ? (
+                      <p className="text-white">Loading Movies...</p>
+                    ) : errorMessage ? (
+                      <p className="text-red-500">
+                        Error loading recommendation movies
+                      </p>
+                    ) : (
+                      <ul className="flex overflow-x-auto gap-4 py-4 no-scrollbar">
+                        {recommendationMovies.map((movie) => (
+                          <Link
+                            key={movie.id}
+                            to={`/moviepage/${movie.id}`}
+                            className="block"
+                          >
+                            <li className="flex-shrink-0 w-[150px]">
+                              <MovieCard movie={movie} />
+                            </li>
+                          </Link>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
 
-          <section className="all-movies">
-            <h2 className="mt-[20px]">All Movies</h2>
-            {loading ? (
-              <p className="text-white">Loading Movies...</p>
-            ) : errorMessage ? (
-              <p className="text-red-500"></p>
-            ) : (
-              <ul>
-                {movies.map((movie) => (
-                  <MovieCard key={movie.id} movie={movie} />
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      </div>
-    </main>
+                  <section className="all-movies">
+                    <h2 className="mt-[20px] text-white">All Movies</h2>
+                    {loading ? (
+                      <p className="text-white">Loading Movies...</p>
+                    ) : errorMessage ? (
+                      <p className="text-red-500">{errorMessage}</p>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {movies.map((movie) => (
+                          <Link
+                            key={movie.id}
+                            to={`/moviepage/${movie.id}`}
+                            className="block"
+                          >
+                            <MovieCard movie={movie} />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </div>
+            </main>
+          }
+        />
+        <Route path="/moviepage/:id" element={<MoviePage />} />
+        <Route path="/watch/:id" element={<MovieWatch />} />
+      </Routes>
+    </Router>
   );
 }
 
